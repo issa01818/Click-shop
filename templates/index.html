@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Shop - Bienvenue</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="https://t3.ftcdn.net/jpg/02/41/39/06/360_F_241390620_hihddCG15N7I8HyPWUiv1eUH85D2SN9z.jpg" alt="Logo Click Shop">
+            <h1>Bienvenue dans Click Shop</h1>
+        </div>
+        <a href="/panier" class="panier">Voir Panier</a>
+    </header>
+
+    <section class="produits">
+        {% for produit in produits %}
+        <div class="produit">
+            <img src="{{ produit.image }}" alt="{{ produit.nom }}">
+            <h3>{{ produit.nom }}</h3>
+            <p>Prix: {{ produit.prix }}€</p>
+            <p>Couleur: {{ produit.couleur }}</p>
+            <button>Ajouter au Panier</button>
+        </div>
+        {% endfor %}
+    </section>
+
+    <footer>
+        <div class="info-contact">
+            <p>Adresse: Colobane</p>
+            <p>Email: diatto45@gmail.com</p>
+            <p>Contact: 704567823</p>
+        </div>
+    </footer>
+</body>
+</html>
