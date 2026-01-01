@@ -1,0 +1,58 @@
+name: DevSecOps Workflow
+
+on:
+  push:
+    branches:
+      - main  # ou le nom de ta branche principale
+
+jobs:
+  # Job pour scanner les dépendances avec OWASP Dependency-Check
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup OWASP Dependency-Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.0/dependency-check-6.5.0-release.zip
+          unzip dependency-check-6.5.0-release.zip
+          sudo mv dependency-check /opt/
+          sudo ln -s /opt/dependency-check/bin/dependency-check.sh /usr/local/bin/dependency-check
+
+      - name: Run Dependency-Check
+        run: |
+          dependency-check --project "Click-shop" --scan . --out ./dependency-check-report  # Scanne le projet et génère un rapport
+
+      - name: Upload Dependency-Check report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: ./dependency-check-report/*  # Upload du rapport de vulnérabilité pour l'analyse
+
+  # Job pour scanner l'image Docker avec Trivy
+  trivy-scan:
+    runs-on: ubuntu-latest
+    needs: dependency-check  # Ce job dépend du job précédent et ne s'exécute que si celui-ci réussit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.21.2/trivy_0.21.2_Linux-x86_64.deb
+          sudo dpkg -i trivy_0.21.2_Linux-x86_64.deb
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-app .
+
+      - name: Scan Docker image with Trivy
+        run: |
+          trivy image my-app  # Scan l'image Docker pour détecter des vulnérabilités
