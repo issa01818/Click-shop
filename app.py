@@ -9,6 +9,36 @@ from prometheus_client import start_http_server, Counter, generate_latest
 
 app = Flask(__name__)
 
+# ----- AJOUT DE TOUS LES HEADERS DE SECURITE -----
+@app.after_request
+def set_security_headers(response):
+    # Content Security Policy (CSP)
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+
+    # Headers de protection supplémentaires
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    # Headers pour désactiver le cache des pages sensibles
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
+    return response
+# -----------------------------------------------
+
 # Liste des produits
 produits = [
     {"nom": "Casque Audio", "prix": 45, "couleur": "black", "image": "https://via.placeholder.com/150"},
