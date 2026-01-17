@@ -1,11 +1,7 @@
-# app.py
-
-# Ajoute cette ligne pour appliquer le patch global pour xmlrpc.client
 from defusedxml import xmlrpc  # Patch global pour xmlrpclib
 
 from flask import Flask, render_template, request, redirect, url_for, make_response
 import os
-# from prometheus_client import start_http_server, Counter, generate_latest  # Commenté pour Render
 
 app = Flask(__name__)
 
@@ -19,19 +15,23 @@ produits = [
     {"nom": "Sac à Dos", "prix": 64, "couleur": "blue", "image": "https://via.placeholder.com/150"},
 ]
 
-# Déclaration d'un compteur pour les requêtes HTTP (Prometheus désactivé pour Render)
-# REQUESTS = Counter('http_requests_total', 'Total HTTP Requests')
-
 # Middleware pour ajouter les headers de sécurité à chaque réponse
 @app.after_request
 def add_security_headers(response):
     # Contre XSS / injection
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' https://trusted.cdn.com; "
-        "style-src 'self' https://fonts.googleapis.com; "
-        "img-src 'self' https://trusted-images.com; "
-        "font-src 'self' https://fonts.gstatic.com;"
+        "default-src 'self'; "  # Utilisation de 'self' pour toutes les ressources par défaut
+        "script-src 'self' https://trusted.cdn.com; "  # Scripts provenant de sources sûres
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "  # Styles provenant de sources sûres (unsafe-inline si nécessaire)
+        "img-src 'self' https://trusted-images.com; "  # Images provenant de sources sûres
+        "font-src 'self' https://fonts.gstatic.com; "  # Polices provenant de sources sûres
+        "object-src 'none'; "  # Empêcher le chargement des objets (ex : flash, applets)
+        "frame-src 'none'; "  # Empêcher l'utilisation de frames (protection contre le clickjacking)
+        "connect-src 'self' https://trusted-api.com; "  # API externes de confiance
+        "media-src 'none'; "  # Empêcher le chargement des médias (audio/vidéo)
+        "child-src 'none'; "  # Empêcher les sources d'iframe ou de Web Workers
+        "form-action 'self'; "  # Limiter l'action des formulaires à l'origine du site
+        "upgrade-insecure-requests;"  # Demander le passage en HTTPS si une ressource est demandée en HTTP
     )
     # Anti-clickjacking
     response.headers["X-Frame-Options"] = "DENY"
@@ -50,28 +50,16 @@ def add_security_headers(response):
 # Page d'accueil
 @app.route('/')
 def index():
-    # REQUESTS.inc()  # compteur Prometheus désactivé pour Render
     return render_template('index.html', produits=produits)
 
 # Page du panier
 @app.route('/panier')
 def panier():
-    # REQUESTS.inc()  # compteur Prometheus désactivé pour Render
     return render_template('panier.html')
-
-# Endpoint métriques Prometheus (optionnel, uniquement local)
-# @app.route('/metrics')
-# def metrics():
-#     return generate_latest()  # Expose les métriques au format Prometheus
 
 # Démarrer l'application
 if __name__ == "__main__":
-    # Render fournit le port via l'environnement
     port = int(os.environ.get("PORT", 5006))  # fallback à 5006 si local
-    debug = os.getenv("FLASK_ENV") == "development"     
-    # Prometheus désactivé pour éviter conflit de port
-    # start_http_server(8000)
-    
-    # Flask écoute sur 0.0.0.0 pour Render
+    debug = os.getenv("FLASK_ENV") == "development"
     app.run(host="0.0.0.0", port=port, debug=debug)
 
