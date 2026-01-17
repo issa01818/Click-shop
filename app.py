@@ -26,7 +26,13 @@ produits = [
 @app.after_request
 def add_security_headers(response):
     # Contre XSS / injection
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https:;"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' https://trusted.cdn.com; "
+        "style-src 'self' https://fonts.googleapis.com; "
+        "img-src 'self' https://trusted-images.com; "
+        "font-src 'self' https://fonts.gstatic.com;"
+    )
     # Anti-clickjacking
     response.headers["X-Frame-Options"] = "DENY"
     # Protection contre le sniffing
@@ -62,8 +68,7 @@ def panier():
 if __name__ == "__main__":
     # Render fournit le port via l'environnement
     port = int(os.environ.get("PORT", 5006))  # fallback à 5006 si local
-    debug = os.getenv("FLASK_ENV") == "development"
-    
+    debug = os.getenv("FLASK_ENV") == "development"     
     # Prometheus désactivé pour éviter conflit de port
     # start_http_server(8000)
     
